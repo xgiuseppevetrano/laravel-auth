@@ -86,9 +86,27 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Post $post)
     {
-        //
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string|max:65535',
+            'published' => 'sometimes|accepted'
+        ]);
+        
+        $data = $request->all();
+        
+        if( $post->title != $data['title'] ) {
+            $post->slug = $this->getSlug($data['title']);
+        }
+
+        $post->fill($data);
+
+        $post->published = isset($data['published']);
+
+        $post->save();
+        
+        return redirect()->route('admin.posts.show', $post->id);
     }
 
     /**
@@ -97,9 +115,11 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Post $post)
     {
-        //
+        $post->delete();
+
+        return redirect()->route('admin.posts.index');
     }
 
     private function getSlug($title)
